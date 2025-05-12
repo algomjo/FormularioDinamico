@@ -1,0 +1,16 @@
+﻿@{
+    ViewData["Title"] = "Início";
+}
+
+<h2>Bem-vindo ao Formulário Dinâmico</h2>
+
+<p>Escolha uma opção:</p>
+
+<ul>
+    <li>
+        @Html.ActionLink("Criar Formulário (Construtor)", "Index", "ConstrutorFormulario", null, new { @class = "btn btn-primary" })
+    </li>
+    <li class="mt-2">
+        @Html.ActionLink("Preencher Formulário", "Index", "Formulario", null, new { @class = "btn btn-success" })
+    </li>
+</ul>

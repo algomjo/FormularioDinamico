@@ -1,0 +1,190 @@
+﻿@model FormularioDinamico.Models.FormData
+@using FormularioDinamico.Models
+@{
+    ViewData["Title"] = "Formulário Dinâmico";
+    var campos = ViewBag.Formulario as List<FormField>;
+}
+
+<h2>Formulário Dinâmico</h2>
+
+<form asp-action="Index" method="post">
+    @foreach (var campo in campos)
+    {
+        var nomeCampo = $"Values[{campo.Name}]";
+        var valorCampo = Model.Values.ContainsKey(campo.Name) ? Model.Values[campo.Name] : "";
+
+        <div class="mb-3">
+            @if (campo.Type.ToLower() != "checkbox" && campo.Type.ToLower() != "radio" && campo.Type.ToLower() != "range")
+            {
+                <label class="form-label" for="@campo.Name">@campo.Label</label>
+            }
+
+            @switch (campo.Type.ToLower())
+            {
+                case "text":
+                //case "number":
+                case "date":
+               // case "range":
+               case "email":
+                    @Html.TextBox(nomeCampo, valorCampo, new
+                        {
+                            type = campo.Type,
+                            @class = "form-control",
+                            required = campo.Required ? "required" : null,
+                            id = campo.Name
+                        })
+                    break;
+
+                case "range":
+                    var rangeId = campo.Name;
+                    var outputId = $"{campo.Name}_valor";
+
+                    var atributosRange = new Dictionary<string, object>
+                    {
+                        { "type", "range" },
+                        { "class", "form-range" },
+                        { "id", rangeId },
+                        { "oninput", $"document.getElementById('{outputId}').textContent = this.value" }
+                    };
+
+                    if (campo.Required)
+                        atributosRange.Add("required", "required");
+
+                    if (!string.IsNullOrEmpty(valorCampo))
+                        atributosRange.Add("value", valorCampo);
+                    else
+                        valorCampo = "0"; // valor inicial padrão, se vazio
+
+                    // Adicione atributos opcionais se desejar
+                    atributosRange.Add("min", "0");
+                    atributosRange.Add("max", "100");
+
+                    <label class="form-label" for="@rangeId">
+                        @campo.Label: <span id="@outputId">@valorCampo</span>
+                    </label>
+
+                    @Html.TextBox(nomeCampo, valorCampo, atributosRange)
+                    break;
+
+
+
+                case "number":
+                    if (campo.Negativos)
+                    {
+                        @Html.TextBox(nomeCampo, valorCampo, new
+                            {
+                                type = campo.Type,
+                                @class = "form-control",
+                                required = campo.Required ? "required" : null,
+                                id = campo.Name
+                                // Não define 'min', permitindo negativos
+                            })
+                    }
+                    else
+                    {
+                        @Html.TextBox(nomeCampo, valorCampo, new
+                            {
+                                type = campo.Type,
+                                @class = "form-control",
+                                required = campo.Required ? "required" : null,
+                                id = campo.Name,
+                                min = 0 // Impede números negativos
+                            })
+                    }
+                    break;
+
+
+                case "textarea":
+                    @Html.TextArea(nomeCampo, valorCampo, new
+                        {
+                            @class = "form-control",
+                            required = campo.Required ? "required" : null,
+                            id = campo.Name
+                        })
+                    break;
+
+                case "select":
+                    <select class="form-select"
+                            name="@nomeCampo"
+                            id="@campo.Name"
+                    @(campo.Required ? "required=\"required\"" : "") >
+                        <option value="">-- Selecione --</option>
+                        @foreach (var opt in campo.Options)
+                        {
+                            var selected = Model.Values.ContainsKey(campo.Name) && Model.Values[campo.Name] == opt;
+                            if (selected)
+                            {
+                                @:
+                                <option value="@opt" selected>@opt</option>
+                            }
+                            else
+                            {
+                                @:
+                                <option value="@opt">@opt</option>
+                            }
+                        }
+                    </select>
+                    break;
+
+                case "checkbox":
+                    var isChecked = Model.Values.ContainsKey(campo.Name) && Model.Values[campo.Name] == "true";
+                    <div class="form-check">
+                        @Html.CheckBox(nomeCampo, isChecked, new
+                            {
+                                @class = "form-check-input",
+                                id = campo.Name
+                            })
+                        <label class="form-check-label" for="@campo.Name">@campo.Label</label>
+                    </div>
+                    break;
+
+                case "radio":
+                    <label class="form-label d-block">@campo.Label</label>
+                    @foreach (var opt in campo.Options)
+                    {
+                        var isRadioChecked = Model.Values.ContainsKey(campo.Name) && Model.Values[campo.Name] == opt;
+                        <div class="form-check form-check-inline">
+                            @Html.RadioButton(nomeCampo, opt, isRadioChecked, new
+                                {
+                                    @class = "form-check-input",
+                                    id = $"{campo.Name}-{opt}"
+                                })
+                            <label class="form-check-label" for="@campo.Name-@opt">@opt</label>
+                        </div>
+                    }
+                    break;
+            }
+        </div>
+    }
+    <button type="reset" class="btn btn-primary"> Limpar </button>
+    <button type="submit" class="btn btn-primary">Enviar</button>
+</form>
+
+@*
+<div class="mb-3">
+    @Html.ActionLink("← Voltar ao menu", "Index", "Home", null, new { @class = "btn btn-secondary" })
+</div>
+*@
+@section Scripts {
+    <script>
+        document.querySelector('form').addEventListener('reset', function () {
+            setTimeout(() => {
+                // Para cada input range
+                document.querySelectorAll('input[type="range"]').forEach(input => {
+                    const outputId = input.id + '_valor';
+                    const outputSpan = document.getElementById(outputId);
+                    if (outputSpan) {
+                        outputSpan.textContent = input.value; // atualiza span com valor atual do input
+                    }
+                });
+            }, 50); // pequeno delay para garantir que os valores dos inputs foram resetados
+        });
+    </script>
+}
+
+@if (ViewBag.Resultado != null)
+{
+    <hr />
+    <h4>Dados enviados:</h4>
+    <pre>@ViewBag.Resultado</pre>
+}

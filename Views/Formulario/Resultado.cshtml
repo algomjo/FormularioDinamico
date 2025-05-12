@@ -1,0 +1,10 @@
+﻿@model FormularioDinamico.Models.FormData
+
+<h2>Resultado do Formulário</h2>
+
+<ul>
+    @foreach (var item in Model.Values)
+    {
+        <li><strong>@item.Key:</strong> @item.Value</li>
+    }
+</ul>

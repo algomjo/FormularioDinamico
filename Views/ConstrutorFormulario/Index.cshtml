@@ -1,0 +1,94 @@
+﻿@model FormularioDinamico.Models.FormField
+@{
+    ViewData["Title"] = "Criador de Formulários";
+    var tipos = ViewBag.Tipos as IEnumerable<SelectListItem>;
+    var campos = ViewBag.Campos as List<FormularioDinamico.Models.FormField>;
+    var tiposDescricao = ViewBag.TiposDescricao as Dictionary<string, string>;
+}
+
+<h2>Adicionar Campo</h2>
+
+@using (Html.BeginForm("AdicionarCampo", "ConstrutorFormulario", FormMethod.Post))
+{
+    <div class="mb-3">
+        @Html.LabelFor(m => m.Label)
+        @Html.TextBoxFor(m => m.Label, new { @class = "form-control" })
+    </div>
+
+    <div class="mb-3">
+        @Html.LabelFor(m => m.Type)
+        @Html.DropDownListFor(
+                m => m.Type,
+                tipos,
+                "-- Selecione o tipo de campo --",
+                new { @class = "form-select", onchange = "mostrarOpcoes(this.value)" }
+                )
+    </div>
+
+    <div class="mb-3">
+        @Html.CheckBoxFor(m => m.Required) Requerido
+    </div>
+
+    <div id="opcoesAdicionais"></div>
+
+    <button type="submit" class="btn btn-success">Adicionar</button>
+}
+
+<hr />
+<h3>Campos Adicionados</h3>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Título</th>
+            <th>Tipo</th>
+            <th>Requerido</th>
+            <th>Ações</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < campos.Count; i++)
+        {
+            var tipo = campos[i].Type;
+            var descricao = tiposDescricao != null && tiposDescricao.ContainsKey(tipo)
+            ? tiposDescricao[tipo]
+            : tipo;
+
+            <tr>
+                <td>@campos[i].Label</td>
+                <td>@descricao</td>
+                <td>@(campos[i].Required ? "Sim" : "Não")</td>
+                <td>
+                    @Html.ActionLink("Editar", "EditarCampo", "ConstrutorFormulario", new { index = i }, new { @class = "btn btn-warning btn-sm me-1" })
+                    @Html.ActionLink("Remover", "RemoverCampo", "ConstrutorFormulario", new { index = i }, new { @class = "btn btn-danger btn-sm" })
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+
+@using (Html.BeginForm("SalvarJson", "ConstrutorFormulario", FormMethod.Post))
+{
+    <button type="submit" class="btn btn-primary">Salvar e Usar</button>
+}
+
+@section Scripts {
+    <script>
+        function mostrarOpcoes(tipo) {
+            const container = document.getElementById('opcoesAdicionais');
+            container.innerHTML = '';
+
+            if (tipo === 'select' || tipo === 'radio') {
+                container.innerHTML = `
+                    <label>Opções (uma por linha)</label>
+                    <textarea name="optionsInput" class="form-control"></textarea>
+                `;
+            }
+            else if (tipo === 'number') {
+                container.innerHTML = `
+                    <label><input type="checkbox" name="Negativos" value="true" /> Permitir números negativos</label>
+                `;
+            }
+        }
+    </script>
+}

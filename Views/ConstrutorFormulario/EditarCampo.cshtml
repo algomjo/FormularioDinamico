@@ -1,0 +1,62 @@
+﻿@model FormularioDinamico.Models.FormField
+@{
+    ViewData["Title"] = "Editar Campo";
+    var tipos = ViewBag.Tipos as IEnumerable<SelectListItem>;
+    int index = ViewBag.Index;
+}
+
+<h2>Editar Campo</h2>
+
+@using (Html.BeginForm("EditarCampo", "ConstrutorFormulario", FormMethod.Post))
+{
+    @Html.Hidden("index", index)
+
+    <div class="mb-3">
+        @Html.LabelFor(m => m.Label)
+        @Html.TextBoxFor(m => m.Label, new { @class = "form-control" })
+    </div>
+
+    <div class="mb-3">
+        @Html.LabelFor(m => m.Type)
+        @Html.DropDownListFor(
+                m => m.Type,
+                tipos,
+                "-- Selecione o tipo de campo --",
+                new { @class = "form-select", onchange = "mostrarOpcoes(this.value)" }
+                )
+    </div>
+
+    <div class="mb-3">
+        @Html.CheckBoxFor(m => m.Required) Requerido
+    </div>
+
+    <div id="opcoesAdicionais"></div>
+
+    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+}
+
+@section Scripts {
+    <script>
+        function mostrarOpcoes(tipo) {
+            const container = document.getElementById('opcoesAdicionais');
+            container.innerHTML = '';
+
+            if (tipo === 'select' || tipo === 'radio') {
+                container.innerHTML = `
+                    <label>Opções (uma por linha)</label>
+                    <textarea name="optionsInput" class="form-control">@string.Join("\n", Model.Options ?? new List<string>())</textarea>
+                `;
+            }
+            else if (tipo === 'number') {
+                container.innerHTML = `
+                    <label><input type="checkbox" name="Negativos" value="true" /> Permitir números negativos</label>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            mostrarOpcoes('@Model.Type');
+        });
+    </script>
+}
